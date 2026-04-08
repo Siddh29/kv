@@ -34,13 +34,36 @@ function FitBounds({ boundary }: { boundary: any }) {
 function MapEvents({ onLocationSelect }: { onLocationSelect: (lat: number, lng: number) => void }) {
   const map = useMap();
   useMapEvents({
-    click(e) {
+    async click(e) {
       const { lat, lng } = e.latlng;
+      const zoom = Math.floor(map.getZoom());
       onLocationSelect(lat, lng);
-      L.popup()
+      
+      const popup = L.popup()
         .setLatLng(e.latlng)
-        .setContent(`Plot Selected: ${lat.toFixed(4)}, ${lng.toFixed(4)}`)
+        .setContent(`Plot Selected: ${lat.toFixed(4)}, ${lng.toFixed(4)}<br/>Analyzing vegetation...`)
         .openOn(map);
+
+      // Calculate Tile Coordinates
+      const n = Math.pow(2, zoom);
+      const latRad = lat * Math.PI / 180;
+      const x = Math.floor((lng + 180.0) / 360.0 * n);
+      const sec = 1 / Math.cos(latRad);
+      const y = Math.floor((1.0 - Math.log(Math.tan(latRad) + sec) / Math.PI) / 2.0 * n);
+      
+      try {
+        const res = await fetch(`/analyze-tile?z=${zoom}&x=${x}&y=${y}`);
+        if(res.ok) {
+           const data = await res.json();
+           const percent = (data.vegetation_density * 100).toFixed(1);
+           const trees = data.tree_count !== undefined ? data.tree_count : 0;
+           popup.setContent(`Plot Selected: ${lat.toFixed(4)}, ${lng.toFixed(4)}<br/><b>Vegetation: ${percent}%</b><br/><b>Estimated Trees: ${trees}</b>`);
+        } else {
+           popup.setContent(`Plot Selected: ${lat.toFixed(4)}, ${lng.toFixed(4)}<br/>Vegetation: (No Data)`);
+        }
+      } catch (err) {
+        popup.setContent(`Plot Selected: ${lat.toFixed(4)}, ${lng.toFixed(4)}<br/>Vegetation: Backend Offline`);
+      }
     },
   });
   return null;
@@ -50,6 +73,7 @@ export default function MapWrapper() {
   const [boundary, setBoundary] = useState<any>(null);
   const [showDEM, setShowDEM] = useState(true);
   const [showOrtho, setShowOrtho] = useState(true);
+  const [showVegetation, setShowVegetation] = useState(false);
 
   useEffect(() => {
     fetch("/boundary.geojson")
@@ -108,6 +132,16 @@ export default function MapWrapper() {
           />
         )}
 
+        {showVegetation && (
+          <TileLayer
+            url="/overlay-tile?z={z}&x={x}&y={y}"
+            minZoom={10}
+            maxZoom={20}
+            opacity={1.0}
+            zIndex={20}
+          />
+        )}
+
         {boundary && <GeoJSON data={boundary} style={{ color: "#22c55e", weight: 2, fillOpacity: 0.1 }} />}
         
         <FitBounds boundary={boundary} />
@@ -160,6 +194,25 @@ export default function MapWrapper() {
           }}
         >
           {showDEM ? "DEM Active" : "Show DEM"}
+        </button>
+
+        <button
+          onClick={(e) => { e.stopPropagation(); setShowVegetation(!showVegetation); }}
+          style={{
+            padding: "8px 16px",
+            background: showVegetation ? "#eab308" : "#4b5563",
+            color: "white",
+            border: "none",
+            borderRadius: "12px",
+            cursor: "pointer",
+            fontWeight: "600",
+            fontSize: "12px",
+            boxShadow: "0 4px 6px rgba(0,0,0,0.2)",
+            transition: "all 0.2s",
+            backdropFilter: "blur(4px)"
+          }}
+        >
+          {showVegetation ? "Veg Layer Active" : "Show Veg Layer"}
         </button>
       </div>
 
