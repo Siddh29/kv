@@ -1,0 +1,54 @@
+/** @type {import('tailwindcss').Config} */
+export default {
+  content: [
+    "./index.html",
+    "./src/**/*.{js,ts,jsx,tsx}",
+  ],
+  theme: {
+    extend: {
+      colors: {
+        primary: {
+          green: "#22c55e",
+          dark: "#16a34a",
+          soft: "#f0fdf4",
+        },
+        earth: {
+          brown: "#78350f",
+          dark: "#451a03",
+        },
+        soil: {
+          beige: "#fef3c7",
+          light: "#fffbeb",
+        },
+        sunlight: "#fef08a",
+      },
+      borderRadius: {
+        '2xl': '1rem',
+        '3xl': '1.5rem',
+      },
+      backgroundImage: {
+        'nature-gradient': 'linear-gradient(to bottom right, #14532d, #064e3b)',
+        'soft-nature': 'linear-gradient(to bottom, #f0fdf4, #ffffff)',
+      },
+      boxShadow: {
+        'organic': '0 4px 20px -2px rgba(22, 101, 52, 0.1), 0 2px 12px -2px rgba(22, 101, 52, 0.05)',
+        'glow-green': '0 0 15px rgba(34, 197, 94, 0.3)',
+      },
+      animation: {
+        'fade-in': 'fadeIn 0.5s ease-out forwards',
+        'scale-in': 'scaleIn 0.3s ease-out forwards',
+      },
+      keyframes: {
+        fadeIn: {
+          '0%': { opacity: '0', transform: 'translateY(10px)' },
+          '100%': { opacity: '1', transform: 'translateY(0)' },
+        },
+        scaleIn: {
+          '0%': { transform: 'scale(0.95)', opacity: '0' },
+          '100%': { transform: 'scale(1)', opacity: '1' },
+        },
+      },
+    },
+  },
+  plugins: [],
+}
